@@ -11,6 +11,18 @@
   ros_type_name: "sensor_msgs/msg/JointState"
   direction: GZ_TO_ROS
 
+- gz_topic_name: "/model/{{ model_name }}/pose"
+  gz_type_name: "gz.msgs.Pose_V"
+  ros_topic_name: "tf"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  direction: GZ_TO_ROS
+
+- gz_topic_name: "/model/{{ model_name }}/pose_static"
+  gz_type_name: "gz.msgs.Pose_V"
+  ros_topic_name: "tf_static"
+  ros_type_name: "tf2_msgs/msg/TFMessage"
+  direction: GZ_TO_ROS
+
 - gz_topic_name: "/model/{{ model_name }}/joint/{{ prefix }}Shoulder_Rotation/0/cmd_pos"
   gz_type_name: "gz.msgs.Double"
   ros_topic_name: "{{ prefix }}shoulder_rotation/cmd_pos"
@@ -46,4 +58,3 @@
   ros_topic_name: "{{ prefix }}gripper/cmd_pos"
   ros_type_name: "std_msgs/msg/Float64"
   direction: ROS_TO_GZ
-

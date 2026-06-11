@@ -147,6 +147,36 @@ def generate_launch_description():
             default_value='false',
             description='Use topic based hardware interface instead of gz_ros_control'
         ),
+        DeclareLaunchArgument(
+            "x",
+            default_value="0.0",
+            description="The initial 'x' position (m).",
+        ),
+        DeclareLaunchArgument(
+            "y",
+            default_value="0.0",
+            description="The initial 'y' position (m).",
+        ),
+        DeclareLaunchArgument(
+            "z",
+            default_value="0.0",
+            description="The initial 'z' position (m).",
+        ),
+        DeclareLaunchArgument(
+            "R",
+            default_value="0.0",
+            description="The initial roll angle (radians).",
+        ),
+        DeclareLaunchArgument(
+            "P",
+            default_value="0.0",
+            description="The initial pitch angle (radians).",
+        ),
+        DeclareLaunchArgument(
+            "Y",
+            default_value="0.0",
+            description="The initial yaw angle (radians).",
+        ),
     ])
 
     def launch_setup(context, *args, **kwargs):
@@ -191,16 +221,33 @@ def generate_launch_description():
                 'so_arm_100',
                 '-allow_renaming',
                 'true',
-                '-x', '0.0',
-                '-y', '0.0',
-                '-z', '0.0',
-                '-R', '0.0',
-                '-P', '0.0',
-                '-Y', '0.0',
-                '-use_sim',
-                'true',
+                '-x', LaunchConfiguration('x'),
+                '-y', LaunchConfiguration('y'),
+                '-z', LaunchConfiguration('z'),
+                '-R', LaunchConfiguration('R'),
+                '-P', LaunchConfiguration('P'),
+                '-Y', LaunchConfiguration('Y'),
+                '-world_frame', 'world', 
+                '-use_sim', 'true',
             ],
             output='screen'
+        )
+
+        # ensure we correctly offset the base link from the world origin
+        spawn_tf_publisher = Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='world_to_base_link_static_tf',
+            arguments=[
+                '--x', LaunchConfiguration('x'),
+                '--y', LaunchConfiguration('y'),
+                '--z', LaunchConfiguration('z'),
+                '--roll', LaunchConfiguration('R'),
+                '--pitch', LaunchConfiguration('P'),
+                '--yaw', LaunchConfiguration('Y'),
+                '--frame-id', 'world',
+                '--child-frame-id', f'{prefix}base_link'
+            ]
         )
 
         # TODO: use dof launch argument consistently
@@ -278,7 +325,12 @@ def generate_launch_description():
             condition=IfCondition(LaunchConfiguration('use_topic_hardware_interface')),
             package="ros_gz_bridge",
             executable="parameter_bridge",
-            parameters=[{"config_file": bridge_config_file}],
+            parameters=[
+                {
+                    "config_file": bridge_config_file,
+                    "qos_overrides./tf_static.publisher.durability": "transient_local",
+                }
+            ],
             output="screen",
         )
 
@@ -294,6 +346,7 @@ def generate_launch_description():
             robot_state_publisher,
             gazebo,
             spawn_robot,
+            spawn_tf_publisher,
             gz_ros2_control_bridge,
             topic_based_control_bridge,
             command_relay,
@@ -346,6 +399,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         arguments,
-        gazebo_resource_path,
+        #gazebo_resource_path,
         OpaqueFunction(function=launch_setup)
     ])
